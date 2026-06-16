@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Riverd</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --felt-dark: #0b1f17; --felt: #123524; --felt-light: #1a4632;
+    --gold: #c9a45c; --gold-bright: #e0bd76; --cream: #f3ede0;
+    --text-dim: #8fa396; --red: #b8543f; --green-win: #5a9e6f;
+    --card-bg: #fbf8f2; --border-soft: rgba(201,164,92,0.18);
+  }
+  html, body { background: var(--felt-dark); color: var(--cream); font-family: 'Inter', sans-serif; height: 100%; overflow-x: hidden; }
+  #root { min-height: 100vh; }
+  .setup-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; background: radial-gradient(circle at 50% 0%, var(--felt-light) 0%, var(--felt-dark) 70%); }
+  .setup-logo { font-family: 'Fraunces', serif; font-weight: 700; font-size: 42px; letter-spacing: -1px; color: var(--gold-bright); margin-bottom: 4px; }
+  .setup-tagline { font-size: 13px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 48px; }
+  .setup-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-soft); border-radius: 16px; padding: 28px 24px; width: 100%; max-width: 380px; }
+  .setup-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; display: block; }
+  .setup-input { width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border-soft); border-radius: 10px; padding: 14px 16px; color: var(--cream); font-size: 15px; font-family: 'JetBrains Mono', monospace; margin-bottom: 20px; outline: none; }
+  .setup-input:focus { border-color: var(--gold); }
+  .setup-input::placeholder { color: rgba(255,255,255,0.25); }
+  .setup-note { font-size: 12px; color: var(--text-dim); line-height: 1.6; margin-bottom: 24px; }
+  .setup-btn { width: 100%; background: var(--gold); color: #1a1208; border: none; border-radius: 10px; padding: 15px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+  .setup-btn:disabled { opacity: 0.4; }
+  .setup-btn:active { transform: scale(0.98); }
+  .setup-error { color: var(--red); font-size: 13px; margin-top: 12px; text-align: center; }
+  .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--felt-dark); border-bottom: 1px solid var(--border-soft); position: sticky; top: 0; z-index: 10; }
+  .topbar-brand { font-family: 'Fraunces', serif; font-weight: 700; font-size: 19px; color: var(--gold-bright); }
+  .topbar-stack { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; color: var(--cream); }
+  .topbar-stack span { color: var(--text-dim); font-size: 11px; font-weight: 400; margin-right: 6px; }
+  .scroll-area { flex: 1; overflow-y: auto; padding: 16px 16px 140px; }
+  .loading-block { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text-dim); font-size: 14px; gap: 14px; }
+  .spinner { width: 28px; height: 28px; border: 2.5px solid var(--border-soft); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hand-banner { text-align: center; padding: 10px 0 18px; }
+  .hand-banner-num { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+  .hand-banner-meta { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .players-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 13px; }
+  .players-table th { text-align: left; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); padding: 0 8px 8px 0; font-weight: 600; border-bottom: 1px solid var(--border-soft); }
+  .players-table td { padding: 9px 8px 9px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .players-table tr.hero-row td { color: var(--gold-bright); font-weight: 600; }
+  .players-table .stack-cell { font-family: 'JetBrains Mono', monospace; color: var(--cream); }
+  .players-table .read-cell { color: var(--text-dim); font-size: 11.5px; font-style: italic; }
+  .street-block { background: rgba(255,255,255,0.025); border: 1px solid var(--border-soft); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .street-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .street-name { font-family: 'Fraunces', serif; font-weight: 600; font-size: 16px; color: var(--gold-bright); }
+  .street-pot { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-dim); }
+  .board-row { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .play-card { background: var(--card-bg); border-radius: 6px; padding: 6px 9px; font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; color: #1a1a1a; box-shadow: 0 2px 5px rgba(0,0,0,0.35); min-width: 34px; text-align: center; }
+  .play-card.red { color: var(--red); }
+  .play-card.placeholder { background: rgba(255,255,255,0.05); border: 1.5px dashed rgba(255,255,255,0.15); color: transparent; box-shadow: none; }
+  .action-list { display: flex; flex-direction: column; gap: 0; }
+  .action-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13.5px; }
+  .action-row:last-child { border-bottom: none; }
+  .action-row .pname { color: var(--cream); }
+  .action-row .pname.hero { color: var(--gold-bright); font-weight: 600; }
+  .action-row .pstack { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-dim); margin-left: 8px; }
+  .action-tag { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 3px 9px; border-radius: 5px; letter-spacing: 0.5px; }
+  .action-tag.fold { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+  .action-tag.check { background: rgba(255,255,255,0.06); color: #b8c2bc; }
+  .action-tag.call { background: rgba(90,158,111,0.16); color: var(--green-win); }
+  .action-tag.bet, .action-tag.raise, .action-tag.allin { background: rgba(201,164,92,0.18); color: var(--gold-bright); }
+  .action-tag.pending { background: transparent; color: var(--text-dim); border: 1px dashed var(--border-soft); }
+  .to-call-line { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-soft); font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--gold-bright); text-align: center; }
+  .debrief-card { background: rgba(255,255,255,0.025); border: 1px solid var(--border-soft); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+  .debrief-title { font-family: 'Fraunces', serif; font-weight: 600; font-size: 18px; color: var(--gold-bright); margin-bottom: 14px; }
+  .debrief-body { font-size: 14px; line-height: 1.65; color: #d6cfc0; white-space: pre-wrap; }
+  .debrief-body strong { color: var(--gold-bright); }
+  .action-bar { position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, rgba(11,31,23,0) 0%, var(--felt-dark) 25%); padding: 14px 16px 22px; z-index: 20; }
+  .quick-actions { display: flex; gap: 8px; margin-bottom: 10px; }
+  .qa-btn { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--border-soft); color: var(--cream); border-radius: 10px; padding: 13px 8px; font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif; }
+  .qa-btn.fold { color: var(--text-dim); }
+  .qa-btn.call { color: var(--green-win); border-color: rgba(90,158,111,0.3); }
+  .qa-btn:active { transform: scale(0.96); }
+  .raise-row { display: flex; gap: 8px; }
+  .raise-input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-soft); border-radius: 10px; padding: 13px 14px; color: var(--cream); font-size: 15px; font-family: 'JetBrains Mono', monospace; outline: none; }
+  .raise-input:focus { border-color: var(--gold); }
+  .raise-btn { background: var(--gold); color: #1a1208; border: none; border-radius: 10px; padding: 13px 22px; font-size: 14px; font-weight: 700; font-family: 'Inter', sans-serif; }
+  .raise-btn:active { transform: scale(0.96); }
+  .continue-btn { width: 100%; background: var(--gold); color: #1a1208; border: none; border-radius: 10px; padding: 15px; font-size: 15px; font-weight: 700; font-family: 'Inter', sans-serif; }
+  .continue-btn:active { transform: scale(0.98); }
+  .session-summary { display: flex; justify-content: space-between; padding: 12px 16px; background: rgba(255,255,255,0.025); border-radius: 12px; margin-bottom: 14px; border: 1px solid var(--border-soft); }
+  .ss-item { text-align: center; flex: 1; }
+  .ss-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim); }
+  .ss-val { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--cream); margin-top: 3px; }
+  .leak-table { width: 100%; font-size: 12.5px; margin-top: 10px; }
+  .leak-table td { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--cream); }
+  .leak-table td:last-child { text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--red); }
+  .api-note { text-align: center; font-size: 11px; color: var(--text-dim); padding: 8px 0 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect, useCallback } = React;
+
+const SYSTEM_PROMPT = `You are running a live poker simulation called Riverd. The user is the player (Hero). You control everything else.
+
+## SETTING
+- Casino: Wynn Las Vegas poker room
+- Stakes: $2/$5 NL Hold'em
+- Players: 8 (Hero + 7 opponents)
+- Hero starting stack: $1,000
+
+## OUTPUT FORMAT - CRITICAL
+Respond with ONLY a single valid JSON object, no markdown, no prose outside it, no code fences:
+{
+  "screen": "table_setup" | "hand_action" | "debrief" | "rebuy_prompt",
+  "hand_number": number, "street": "preflop"|"flop"|"turn"|"river"|"showdown",
+  "pot": number, "board": ["A♠","K♦","7♣"], "hero_cards": ["..",".."],
+  "players": [{"name":"string","position":"string","stack":number,"is_hero":boolean,"action":"string or null","read":"string only on table_setup"}],
+  "to_call": number, "awaiting_hero": boolean,
+  "debrief_text": "string only on debrief screen, plain text, CAPS section labels",
+  "leak_tracker": [{"leak":"string","occurrences":number,"cost":"~$40"}],
+  "hero_stack": number, "net_result": number, "message": "string status"
+}
+Players array only shows resolved actions up to hero's turn; later players show action: null. Never output text outside the JSON.
+
+## TABLE SETUP
+Generate 7 opponents first turn. Max 2 loose/sticky, min 2 tight, at least 1 disciplined reg, stacks $300-$1000. Track hidden archetype/frequencies internally, only reveal observable "read" text.
+
+## DEALING RULES
+1 in 5 hands hero gets garbage (72o etc), rest playable. Zero duplicate cards ever - track every dealt card internally.
+
+## STATISTICAL REALISM - CRITICAL
+Hero flops pair ~32%, two pair+ ~5%, misses ~63%. Sets ~12% w/ pocket pair, never two sets in a row in last 4 pocket pair hands. Flush draws complete ~35%, OESD ~32%, gutshot ~17%. Two-tone flops ~55%, monotone ~5%, paired ~17%, rainbow capped 45% (3 rainbow in a row forces two-tone next). Straights ~4.6%, flushes ~3%, full houses ~2.6% per session by river. NEVER bias board toward hero's cards. ~65% turns/~60% rivers are blanks.
+
+## OPPONENT DECISIONS
+1. Hand strength (strong/marginal/weak) overrides everything - strong hands never fold, pot-committed never folds, nuts always raise/slowplay never fold, nits never bluff.
+2. MANDATORY: before any call of a raise/shove, verify the player has a pair, draw, or made hand. Zero equity = always folds to a raise, regardless of archetype. Bluffers fold to raises.
+3. Fold frequencies (weak/marginal only) vs cbet/3bet/2ndbarrel/riverbet: Nit 75/85/80/85, TAG 55/65/60/65, LAG 35/40/35/40, Station 20/30/25/20, Recreational 45/55/50/55, Splashy 25/35/30/35.
+4. Barrel freq (bluff/thin value) flop/turn/river: Nit 50/30/10, TAG 65/45/25, LAG 75/60/45, Recreational 55/30/15, Station 40/25/10, Splashy 70/50/35. Reduce turn/river barrel 10-20% if hero called previous street or range improves.
+5. Multiway limped pots: reduce all fold frequencies 15%+ for loose players, normal for Nit/TAG.
+6. Preflop 3bet/4bet/5bet total freq: Nit 12/8/5%, TAG 28/16/10%, LAG 45/25/15%, Recreational 15/7/3%, Station 7/3/2%, Splashy 35/20/12%. Postflop raise/check-raise/re-raise frequencies follow same archetype ordering, decreasing street by street, never a nit bluff-raise.
+7. Float frequency vs cbet: Nit 5%, TAG 15%, LAG 35%, Recreational 10%, Station 40%, Splashy 30%. Floaters check turn then bluff river ~60% if checked to, or fold ~65% if bet into again.
+
+## HAND EVALUATION - MANDATORY
+Verify kickers, two-pair rank order, exact set position (vs all 3 board cards), and side pots mathematically before any showdown or debrief claim.
+
+## SEQUENCING - CRITICAL
+Debrief always completes before next hand deals - never combine. STOP AT HERO: never show resolved actions for players after hero in sequence; they show action: null until hero acts. Each player has exactly one fixed position label. Streets only advance once all active players have matched the bet/folded/all-in; OOP acts first always, IP last always.
+
+## DEBRIEF
+After every hand: HAND SUMMARY (one sentence), STREET BY STREET (action+sizing, verdict Correct/Marginal/No, 2-4 sentences specific reasoning citing real cards/odds/opponent), WHAT OPPONENTS HELD (relevant hands only), KEY LEAK THIS HAND (if any, note if recurring), ONE THING DONE WELL (only if genuine). Be direct, don't soften mistakes, verify all comparisons mathematically, evaluate each street independently. EV VERIFICATION: before flagging any leak, calculate and show EV explicitly - it must be demonstrably negative. Split-pot raises aren't automatically leaks. State actual pot odds. Check independent steal value before confirming a fold as simply correct. If EV is neutral, say so. Max ~350 words.
+
+## TRACKING
+Maintain full leak_tracker array across the whole session, every response. Track hero_stack and net_result precisely and continuously from conversation history, never recompute from scratch. If hero busts, screen becomes rebuy_prompt asking rebuy amount (max $1,000).
+
+This is a training simulation calibrated for learning (~80% playable hands vs ~20-30% real), not pure GTO. Respond with ONLY the JSON object.`;
+
+function PlayingCard({ card, placeholder }) {
+  if (placeholder) return <div className="play-card placeholder">??</div>;
+  if (!card) return null;
+  const isRed = card.includes('♦') || card.includes('♥');
+  return <div className={`play-card ${isRed ? 'red' : ''}`}>{card}</div>;
+}
+function fmtMoney(n) {
+  if (n === undefined || n === null) return '$0';
+  const sign = n < 0 ? '-' : '';
+  return sign + '$' + Math.abs(Math.round(n)).toLocaleString();
+}
+function ActionTag({ action }) {
+  if (action === null || action === undefined) return <span className="action-tag pending">—</span>;
+  const a = action.toLowerCase();
+  let cls = 'fold';
+  if (a.includes('call')) cls = 'call';
+  else if (a.includes('check')) cls = 'check';
+  else if (a.includes('raise') || a.includes('bet') || a.includes('all')) cls = 'bet';
+  return <span className={`action-tag ${cls}`}>{action}</span>;
+}
+function DebriefView({ text }) {
+  if (!text) return null;
+  const labels = ['HAND SUMMARY', 'STREET BY STREET', 'WHAT OPPONENTS HELD', 'KEY LEAK THIS HAND', 'ONE THING DONE WELL'];
+  let html = text;
+  labels.forEach(l => { html = html.split(l).join(`@@${l}@@`); });
+  const parts = html.split('@@').filter(Boolean);
+  return (
+    <div className="debrief-body">
+      {parts.map((p, i) => labels.includes(p) ? <strong key={i}>{p}{'\n'}</strong> : <span key={i}>{p}</span>)}
+    </div>
+  );
+}
+
+function App() {
+  const [apiKey, setApiKey] = useState('');
+  const [keyInput, setKeyInput] = useState('');
+  const [setupError, setSetupError] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [state, setState] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [raiseAmount, setRaiseAmount] = useState('');
+  const [error, setError] = useState('');
+  const scrollRef = useRef(null);
+
+  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, [state]);
+
+  const callClaude = useCallback(async (newUserMessage) => {
+    setLoading(true); setError('');
+    const updatedMessages = [...messages, { role: 'user', content: newUserMessage }];
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, system: SYSTEM_PROMPT, messages: updatedMessages })
+      });
+      if (!resp.ok) { const errBody = await resp.text(); throw new Error(`API error ${resp.status}: ${errBody.slice(0, 200)}`); }
+      const data = await resp.json();
+      const textBlock = data.content.find(b => b.type === 'text');
+      const raw = textBlock ? textBlock.text : '{}';
+      let cleaned = raw.trim();
+      if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```(json)?/, '').replace(/```$/, '').trim();
+      const parsed = JSON.parse(cleaned);
+      setMessages([...updatedMessages, { role: 'assistant', content: raw }]);
+      setState(parsed);
+    } catch (e) {
+      console.error(e); setError(e.message || 'Something went wrong talking to Claude.');
+    } finally { setLoading(false); }
+  }, [messages, apiKey]);
+
+  const handleStart = () => {
+    if (!keyInput.trim().startsWith('sk-ant-')) { setSetupError("That doesn't look like an Anthropic API key. It should start with sk-ant-"); return; }
+    setSetupError(''); setApiKey(keyInput.trim());
+  };
+
+  useEffect(() => { if (apiKey && messages.length === 0) callClaude('Deal'); }, [apiKey]);
+
+  const sendAction = (text) => { setRaiseAmount(''); callClaude(text); };
+
+  if (!apiKey) {
+    return (
+      <div className="setup-screen">
+        <div className="setup-logo">Riverd</div>
+        <div className="setup-tagline">$2/5 · Wynn Las Vegas</div>
+        <div className="setup-card">
+          <label className="setup-label">Anthropic API Key</label>
+          <input className="setup-input" type="password" placeholder="sk-ant-..." value={keyInput} onChange={e => setKeyInput(e.target.value)} autoCapitalize="none" autoCorrect="off" />
+          <div className="setup-note">Your key stays in this browser tab only — it's never saved, stored, or sent anywhere except directly to Anthropic's API.</div>
+          <button className="setup-btn" onClick={handleStart}>Sit down at the table</button>
+          {setupError && <div className="setup-error">{setupError}</div>}
+        </div>
+      </div>
+    );
+  }
+
+  const screen = state?.screen;
+  return (
+    <div className="app-shell">
+      <div className="topbar">
+        <div className="topbar-brand">Riverd</div>
+        <div className="topbar-stack"><span>STACK</span>{state ? fmtMoney(state.hero_stack) : '—'}</div>
+      </div>
+      <div className="scroll-area" ref={scrollRef}>
+        {loading && <div className="loading-block"><div className="spinner"></div><div>Dealing...</div></div>}
+        {error && <div className="debrief-card"><div className="debrief-title">Connection issue</div><div className="debrief-body">{error}</div></div>}
+        {!loading && state && screen === 'table_setup' && (
+          <React.Fragment>
+            <div className="hand-banner"><div className="hand-banner-num">Table Set</div><div className="hand-banner-meta">Wynn Las Vegas · $2/$5 NL</div></div>
+            <table className="players-table">
+              <thead><tr><th>Player</th><th>Stack</th><th>Read</th></tr></thead>
+              <tbody>{state.players?.map((p, i) => (
+                <tr key={i} className={p.is_hero ? 'hero-row' : ''}>
+                  <td>{p.is_hero ? 'You' : p.name} ({p.position})</td>
+                  <td className="stack-cell">{fmtMoney(p.stack)}</td>
+                  <td className="read-cell">{p.read || ''}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </React.Fragment>
+        )}
+        {!loading && state && (screen === 'hand_action' || screen === 'table_setup') && state.hero_cards && (
+          <React.Fragment>
+            <div className="hand-banner"><div className="hand-banner-num">Hand {state.hand_number}</div></div>
+            <div className="street-block">
+              <div className="street-header">
+                <div className="street-name">{(state.street || 'preflop').toUpperCase()}</div>
+                <div className="street-pot">Pot: {fmtMoney(state.pot)}</div>
+              </div>
+              <div className="board-row">
+                {(state.board && state.board.length > 0) ? state.board.map((c, i) => <PlayingCard key={i} card={c} />) : <div style={{color:'var(--text-dim)', fontSize:13}}>Preflop</div>}
+              </div>
+              <div className="board-row" style={{marginTop: -6}}>
+                {state.hero_cards.map((c, i) => <PlayingCard key={i} card={c} />)}
+                <span style={{color:'var(--text-dim)', fontSize:11, alignSelf:'center', marginLeft:4}}>your hand</span>
+              </div>
+              <div className="action-list">
+                {state.players?.map((p, i) => (
+                  <div className="action-row" key={i}>
+                    <div><span className={`pname ${p.is_hero ? 'hero' : ''}`}>{p.is_hero ? 'You' : p.name} ({p.position})</span><span className="pstack">{fmtMoney(p.stack)}</span></div>
+                    <ActionTag action={p.action} />
+                  </div>
+                ))}
+              </div>
+              {state.awaiting_hero && <div className="to-call-line">Pot: {fmtMoney(state.pot)} · To call: {fmtMoney(state.to_call)}</div>}
+            </div>
+          </React.Fragment>
+        )}
+        {!loading && state && screen === 'debrief' && (
+          <React.Fragment>
+            <div className="session-summary">
+              <div className="ss-item"><div className="ss-label">Stack</div><div className="ss-val">{fmtMoney(state.hero_stack)}</div></div>
+              <div className="ss-item"><div className="ss-label">Net</div><div className="ss-val" style={{color: state.net_result >= 0 ? 'var(--green-win)' : 'var(--red)'}}>{fmtMoney(state.net_result)}</div></div>
+              <div className="ss-item"><div className="ss-label">Hand</div><div className="ss-val">#{state.hand_number}</div></div>
+            </div>
+            <div className="debrief-card"><div className="debrief-title">Debrief</div><DebriefView text={state.debrief_text} /></div>
+            {state.leak_tracker && state.leak_tracker.length > 0 && (
+              <div className="debrief-card">
+                <div className="debrief-title" style={{fontSize: 15}}>Session Leak Tracker</div>
+                <table className="leak-table"><tbody>
+                  {state.leak_tracker.map((l, i) => (<tr key={i}><td>{l.leak} <span style={{color:'var(--text-dim)', fontSize: 11}}>×{l.occurrences}</span></td><td>{l.cost}</td></tr>))}
+                </tbody></table>
+              </div>
+            )}
+          </React.Fragment>
+        )}
+        {!loading && state && screen === 'rebuy_prompt' && <div className="debrief-card"><div className="debrief-title">You're busted</div><div className="debrief-body">{state.message}</div></div>}
+        {!loading && state && state.message && screen !== 'rebuy_prompt' && <div className="api-note">{state.message}</div>}
+      </div>
+      {!loading && state && (
+        <div className="action-bar">
+          {screen === 'hand_action' && state.awaiting_hero && (
+            <React.Fragment>
+              <div className="quick-actions">
+                <button className="qa-btn fold" onClick={() => sendAction('Fold')}>Fold</button>
+                <button className="qa-btn call" onClick={() => sendAction(state.to_call > 0 ? `Call ${state.to_call}` : 'Check')}>{state.to_call > 0 ? `Call ${fmtMoney(state.to_call)}` : 'Check'}</button>
+              </div>
+              <div className="raise-row">
+                <input className="raise-input" type="number" inputMode="numeric" placeholder="Raise to..." value={raiseAmount} onChange={e => setRaiseAmount(e.target.value)} />
+                <button className="raise-btn" onClick={() => raiseAmount && sendAction(`Raise to ${raiseAmount}`)}>Bet/Raise</button>
+              </div>
+            </React.Fragment>
+          )}
+          {screen === 'debrief' && <button className="continue-btn" onClick={() => sendAction('Deal')}>Deal next hand</button>}
+          {screen === 'rebuy_prompt' && (
+            <div className="raise-row">
+              <input className="raise-input" type="number" inputMode="numeric" placeholder="Rebuy amount..." value={raiseAmount} onChange={e => setRaiseAmount(e.target.value)} />
+              <button className="raise-btn" onClick={() => raiseAmount && sendAction(`Rebuy ${raiseAmount}, deal next hand`)}>Rebuy</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
