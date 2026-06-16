@@ -125,7 +125,7 @@ Respond with ONLY a single valid JSON object, no markdown, no prose outside it, 
 Players array only shows resolved actions up to hero's turn; later players show action: null. Never output text outside the JSON.
 
 ## TABLE SETUP
-Generate 7 opponents first turn. Max 2 loose/sticky, min 2 tight, at least 1 disciplined reg, stacks $300-$1000. Track hidden archetype/frequencies internally, only reveal observable "read" text.
+On the very first "Deal" message, do TWO things in this SAME response: (1) generate 7 opponents and seats - max 2 loose/sticky, min 2 tight, at least 1 disciplined reg, stacks $300-$1000, hidden archetype/frequencies tracked internally - AND (2) immediately deal Hand 1 all the way to hero's first decision point. Set screen to "hand_action" (NOT "table_setup") for this response, include hero_cards, the full players array with positions/stacks, any preflop action that occurred before hero's turn, and set awaiting_hero to true with to_call populated. NEVER send a response with no possible action for the user - every response must end either at a hero decision point (awaiting_hero: true) or at a debrief/rebuy screen. Never leave a dead end.
 
 ## DEALING RULES
 1 in 5 hands hero gets garbage (72o etc), rest playable. Zero duplicate cards ever - track every dealt card internally.
@@ -342,7 +342,10 @@ function App() {
               </div>
             </React.Fragment>
           )}
+          {screen === 'hand_action' && !state.awaiting_hero && <button className="continue-btn" onClick={() => sendAction('Continue')}>Continue</button>}
           {screen === 'debrief' && <button className="continue-btn" onClick={() => sendAction('Deal')}>Deal next hand</button>}
+          {screen === 'table_setup' && <button className="continue-btn" onClick={() => sendAction('Continue')}>Continue</button>}
+          {!['hand_action', 'debrief', 'rebuy_prompt', 'table_setup'].includes(screen) && <button className="continue-btn" onClick={() => sendAction('Continue')}>Continue</button>}
           {screen === 'rebuy_prompt' && (
             <div className="raise-row">
               <input className="raise-input" type="number" inputMode="numeric" placeholder="Rebuy amount..." value={raiseAmount} onChange={e => setRaiseAmount(e.target.value)} />
